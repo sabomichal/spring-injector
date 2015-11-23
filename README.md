@@ -1,5 +1,5 @@
 # spring-injector
-A fast alternative to the Spring @Configurable magic. Based on the Apache Wicket's Spring Injector. 
+A fast alternative to the Spring [@Configurable](http://docs.spring.io/spring/docs/current/spring-framework-reference/html/aop.html#aop-using-aspectj) magic. Based on the [Spring Injector](https://ci.apache.org/projects/wicket/apidocs/8.x/org/apache/wicket/spring/injection/annot/SpringComponentInjector.html) from [Apache Wicket](http://wicket.apache.org/) project. 
 
 Do you need to inject spring beans into non managed objects, e.g. domain objects? Are you tired of slow aspectj compilation or load-time weaving? Then spring-injector is the solution.
 
