@@ -11,7 +11,12 @@ import org.springframework.util.Assert;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Implementation that can locate beans within a spring application
@@ -21,11 +26,12 @@ import java.util.*;
  * @author Igor Vaynberg (ivaynberg)
  * @author Istvan Devai
  */
-public class SpringBeanLocator {
+public class SpringBeanLocator implements IProxyTargetLocator {
+    private static final long serialVersionUID = 1L;
 
     // Weak reference so we don't hold up WebApp classloader garbage collection.
     private transient WeakReference<Class<?>> beanTypeCache;
-    private final ApplicationContext springContext;
+    private final ISpringContextLocator springContextLocator;
     private final String beanTypeName;
     private String beanName;
     private Boolean singletonCache = null;
@@ -43,18 +49,18 @@ public class SpringBeanLocator {
     /**
      * Constructor
      *
-     * @param beanName      bean name
-     * @param beanType      bean class
-     * @param springContext spring context
+     * @param beanName bean name
+     * @param beanType bean class
+     * @param locator  spring context locator
      */
-    public SpringBeanLocator(final String beanName, final Class<?> beanType, Field beanField, ApplicationContext springContext) {
-        Assert.notNull(springContext);
-        Assert.notNull(beanType);
+    SpringBeanLocator(final String beanName, final Class<?> beanType, Field beanField, final ISpringContextLocator locator) {
+        Assert.notNull(locator, "Argument locator can not be null.");
+        Assert.notNull(beanType, "Argument beanType can not be null.");
 
         this.beanName = beanName;
-        beanTypeCache = new WeakReference<Class<?>>(beanType);
-        beanTypeName = beanType.getName();
-        this.springContext = springContext;
+        this.beanTypeCache = new WeakReference<>(beanType);
+        this.beanTypeName = beanType.getName();
+        this.springContextLocator = locator;
 
         if (beanField != null) {
             fieldResolvableType = ResolvableType.forField(beanField);
@@ -85,10 +91,9 @@ public class SpringBeanLocator {
      * @return returns whether the bean (the locator is supposed to istantiate) is a singleton or
      * not
      */
-    public boolean isSingletonBean() {
+    boolean isSingletonBean() {
         if (singletonCache == null) {
-            singletonCache = getBeanName() != null &&
-                    getSpringContext().isSingleton(getBeanName());
+            singletonCache = getBeanName() != null && getSpringContext().isSingleton(getBeanName());
         }
         return singletonCache;
     }
@@ -96,10 +101,10 @@ public class SpringBeanLocator {
     /**
      * @return bean class this locator is configured with
      */
-    public Class<?> getBeanType() {
+    private Class<?> getBeanType() {
         Class<?> clazz = beanTypeCache == null ? null : beanTypeCache.get();
         if (clazz == null) {
-            beanTypeCache = new WeakReference<Class<?>>(
+            beanTypeCache = new WeakReference<>(
                     clazz = resolveClass(beanTypeName));
             if (clazz == null) {
                 throw new RuntimeException("SpringBeanLocator could not find class [" +
@@ -134,13 +139,17 @@ public class SpringBeanLocator {
      * @return ApplicationContext
      */
     private ApplicationContext getSpringContext() {
-        return springContext;
+        final ApplicationContext context = springContextLocator.getSpringContext();
+        if (context == null) {
+            throw new IllegalStateException("spring application context locator returned null");
+        }
+        return context;
     }
 
     /**
      * @return bean name this locator is configured with
      */
-    public final String getBeanName() {
+    private String getBeanName() {
         return beanName;
     }
 
@@ -151,7 +160,6 @@ public class SpringBeanLocator {
      * @param name  bean name
      * @param clazz bean class
      * @return found bean
-     * @throws IllegalStateException
      */
     private Object lookupSpringBean(ApplicationContext ctx, String name, Class<?> clazz) {
         try {
@@ -178,12 +186,9 @@ public class SpringBeanLocator {
                 return foundBeans;
             }
 
-            throw new IllegalStateException(
-                    "Concrete bean could not be received from the application context for class: " +
-                            clazz.getName() + ".");
+            throw new IllegalStateException("Concrete bean could not be received from the application context for class: " + clazz.getName() + ".");
         } catch (NoSuchBeanDefinitionException e) {
-            throw new IllegalStateException("bean with name [" + name + "] and class [" +
-                    clazz.getName() + "] not found", e);
+            throw new IllegalStateException("bean with name [" + name + "] and class [" + clazz.getName() + "] not found", e);
         }
     }
 
@@ -208,14 +213,8 @@ public class SpringBeanLocator {
             beanNames.addAll(Arrays.asList(beanNamesArr));
         }
 
-        Iterator<String> nameIterator = beanNames.iterator();
-
         //filter those beans who don't have a definition (used internally by Spring)
-        while (nameIterator.hasNext()) {
-            if (!ctx.containsBeanDefinition(nameIterator.next())) {
-                nameIterator.remove();
-            }
-        }
+        beanNames.removeIf(s -> !ctx.containsBeanDefinition(s));
 
         return beanNames;
     }
@@ -297,7 +296,7 @@ public class SpringBeanLocator {
      * @param name bean name
      * @return bean definition for the current name, null if such a definition is not found.
      */
-    public RootBeanDefinition getBeanDefinition(final ApplicationContext ctx, final String name) {
+    private RootBeanDefinition getBeanDefinition(final ApplicationContext ctx, final String name) {
         ConfigurableListableBeanFactory beanFactory = ((AbstractApplicationContext) ctx).getBeanFactory();
 
         BeanDefinition beanDef = beanFactory.containsBean(name) ?

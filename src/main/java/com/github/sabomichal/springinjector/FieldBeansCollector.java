@@ -2,7 +2,13 @@ package com.github.sabomichal.springinjector;
 
 import org.springframework.core.ResolvableType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Convenience class to extract information about the type and generics of a field to inject.
@@ -11,7 +17,7 @@ import java.util.*;
  * @author Tobias Soloschenko
  * @author Andrea Del Bene
  */
-public class FieldBeansCollector {
+class FieldBeansCollector {
     private final FieldType fieldType;
 
     private final Map<Object, Object> beansToInjectMap;
@@ -22,7 +28,7 @@ public class FieldBeansCollector {
         LIST, SET, MAP, NONE
     }
 
-    public FieldBeansCollector(final ResolvableType fieldResolvableType) {
+    FieldBeansCollector(final ResolvableType fieldResolvableType) {
         Class<?> clazz = fieldResolvableType.resolve();
 
         // The required code starts here which replaces
@@ -53,7 +59,7 @@ public class FieldBeansCollector {
      *
      * @return the instance to inject into the field.
      */
-    public Object getBeansToInject() {
+    Object getBeansToInject() {
         if (beansToInjectMap != null && beansToInjectMap.size() > 0) {
             return beansToInjectMap;
         }
@@ -72,7 +78,7 @@ public class FieldBeansCollector {
      * @param beanName the name of the bean to inject
      * @param bean     the bean to inject
      */
-    public void addBean(String beanName, Object bean) {
+    void addBean(String beanName, Object bean) {
         switch (fieldType) {
             case LIST:
             case SET:

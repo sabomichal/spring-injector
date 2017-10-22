@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,22 +26,21 @@ import java.util.concurrent.ConcurrentMap;
  * This class is usually used by the {@link SpringInjector} to inject spring beans. This class will also
  * utilize caching mechanism (caching singleton beans and bean names) to improve inject performance.
  *
- * @see SpringBeanLocator
- * @see Inject
- *
  * @author Igor Vaynberg (ivaynberg)
  * @author Istvan Devai
  * @author Michal Sabo
+ * @see SpringBeanLocator
+ * @see Inject
  */
 public class AnnotFieldValueFactory implements IFieldValueFactory {
 
     private final ConcurrentMap<SpringBeanLocator, Object> cache = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, String> beanNameCache = new ConcurrentHashMap<>();
 
-    private ApplicationContext springContext;
+    private ISpringContextLocator springContextLocator;
 
-    public AnnotFieldValueFactory(ApplicationContext springContext) {
-        this.springContext = springContext;
+    AnnotFieldValueFactory(ISpringContextLocator springContextLocator) {
+        this.springContextLocator = springContextLocator;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
             Class<?> generic = ResolvableType.forField(field).resolveGeneric(0);
             String beanName = getBeanName(field, name, generic);
 
-            SpringBeanLocator locator = new SpringBeanLocator(beanName, field.getType(), field, getSpringContext());
+            SpringBeanLocator locator = new SpringBeanLocator(beanName, field.getType(), field, springContextLocator);
 
             // only check the cache if the bean is a singleton
             Object cachedValue = cache.get(locator);
@@ -61,7 +61,7 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
                 return cachedValue;
             }
 
-            Object target = locator.locateProxyTarget();
+            Object target = LazyInitProxyFactory.createProxy(field.getType(), locator);
 
             // only put the proxy into the cache if the bean is a singleton
             if (locator.isSingletonBean()) {
@@ -106,7 +106,6 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
      * @param ctx   spring application context
      * @param clazz bean class
      * @return spring name of the bean
-     * @throws IllegalStateException
      */
     private String getBeanNameOfClass(final ApplicationContext ctx, final Class<?> clazz,
                                       final Class<?> generic) {
@@ -149,8 +148,9 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
             if (generic != null) {
                 return null;
             }
-
-            throw new IllegalStateException("More than one bean of type [" + clazz.getName() + "] found, you have to specify the name of the bean (@Named(\"foo\") in order to resolve this conflict. " + "Matched beans: " + StringUtils.arrayToCommaDelimitedString(names.toArray(new String[names.size()])));
+            StringJoiner joiner = new StringJoiner(",");
+            names.forEach(joiner::add);
+            throw new IllegalStateException("More than one bean of type [" + clazz.getName() + "] found, you have to specify the name of the bean " + "(@Inject(name=\"foo\")) or (@Named(\"foo\") if using @javax.inject classes) in order to resolve this conflict. " + "Matched beans: " +  joiner.toString());
         } else if (!names.isEmpty()) {
             return names.get(0);
         }
@@ -158,8 +158,8 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
         return null;
     }
 
-    public BeanDefinition getBeanDefinition(final ConfigurableListableBeanFactory beanFactory,
-                                            final String name) {
+    private BeanDefinition getBeanDefinition(final ConfigurableListableBeanFactory beanFactory,
+                                             final String name) {
         if (beanFactory.containsBeanDefinition(name)) {
             return beanFactory.getBeanDefinition(name);
         } else {
@@ -176,7 +176,7 @@ public class AnnotFieldValueFactory implements IFieldValueFactory {
         return field.isAnnotationPresent(Inject.class);
     }
 
-    public ApplicationContext getSpringContext() {
-        return springContext;
+    private ApplicationContext getSpringContext() {
+        return springContextLocator.getSpringContext();
     }
 }

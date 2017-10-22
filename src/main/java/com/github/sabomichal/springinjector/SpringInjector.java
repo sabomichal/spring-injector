@@ -1,6 +1,5 @@
 package com.github.sabomichal.springinjector;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -16,18 +15,17 @@ import java.util.List;
  *
  * @author Igor Vaynberg (ivaynberg)
  * @author Michal Sabo
- *
  */
 @Component
-public class SpringInjector implements InitializingBean {
-
-    private static SpringInjector instance;
+public class SpringInjector {
 
     @Inject
     private ApplicationContext applicationContext;
 
+    private static SpringInjector instance;
+
     private final ClassMetaCache<Field[]> cache = new ClassMetaCache<>();
-    private IFieldValueFactory fieldValueFactory;
+    private IFieldValueFactory fieldValueFactory = new AnnotFieldValueFactory(new ContextLocator());
 
     private SpringInjector() {
         instance = this;
@@ -81,8 +79,7 @@ public class SpringInjector implements InitializingBean {
                     }
                 }
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new RuntimeException("error while injecting object [" + object.toString() +
-                        "] of type [" + object.getClass().getName() + "]", e);
+                throw new RuntimeException("error while injecting object [" + object.toString() + "] of type [" + object.getClass().getName() + "]", e);
             }
         }
     }
@@ -110,8 +107,16 @@ public class SpringInjector implements InitializingBean {
         return matched.toArray(new Field[matched.size()]);
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        fieldValueFactory = new AnnotFieldValueFactory(applicationContext);
+    ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    private static class ContextLocator implements ISpringContextLocator {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public ApplicationContext getSpringContext() {
+            return SpringInjector.get().getApplicationContext();
+        }
     }
 }
