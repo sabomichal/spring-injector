@@ -1,3 +1,4 @@
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.sabomichal/spring-injector/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.sabomichal/spring-injector)
 # spring-injector
 *A fast alternative to the Spring [@Configurable](http://docs.spring.io/spring/docs/current/spring-framework-reference/html/aop.html#aop-using-aspectj) magic.*
 
