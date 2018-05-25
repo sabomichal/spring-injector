@@ -250,6 +250,7 @@
 		<connection>scm:git:https://github.com/sabomichal/spring-injector.git</connection>
 		<developerConnection>scm:git:git@github.com/sabomichal/spring-injector.git</developerConnection>
 		<url>https://github.com/sabomichal/spring-injector</url>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
