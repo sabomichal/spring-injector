@@ -223,7 +223,7 @@
 	<name>spring-injector</name>
 	<description>A fast alternative to the Spring @Configurable magic.</description>
 	<url>https://github.com/sabomichal/spring-injector</url>
-	<inceptionYear>2012</inceptionYear>
+	<inceptionYear>2016</inceptionYear>
 
 	<issueManagement>
 		<system>GitHub</system>
