@@ -39,7 +39,7 @@ public class SpringInjector {
      * Injects the specified object. This method is usually implemented by delegating to
      * {@link #inject(Object, IFieldValueFactory)} with some {@link AnnotFieldValueFactory}
      *
-     * @param object
+     * @param object object to inject
      * @see #inject(Object, IFieldValueFactory)
      */
     public void inject(final Object object) {
@@ -50,8 +50,8 @@ public class SpringInjector {
      * traverse fields in the class hierarchy of the object and set their value with a locator
      * provided by the locator factory.
      *
-     * @param object
-     * @param factory
+     * @param object object to traverse
+     * @param factory locator factory
      */
     protected void inject(final Object object, final IFieldValueFactory factory) {
         final Class<?> clazz = object.getClass();

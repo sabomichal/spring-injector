@@ -14,7 +14,6 @@ import java.io.Serializable;
  * Ideal implementations use a static lookup to locate the context.
  * <p>
  * For Example:
- * <p>
  * <pre>
  * class SpringContextLocator implements ISpringContextLocator
  * {
@@ -27,7 +26,6 @@ import java.io.Serializable;
  * </pre>
  *
  * @author Igor Vaynberg (ivaynberg)
- * @see org.apache.wicket.spring.SpringBeanLocator
  */
 public interface ISpringContextLocator extends Serializable {
     /**

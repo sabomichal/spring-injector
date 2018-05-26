@@ -173,7 +173,7 @@ class LazyInitProxyFactory {
          * write replace method as defined by Serializable
          *
          * @return object that will replace this object in serialized state
-         * @throws ObjectStreamException
+         * @throws ObjectStreamException in case of write failure
          */
         Object writeReplace() throws ObjectStreamException;
     }

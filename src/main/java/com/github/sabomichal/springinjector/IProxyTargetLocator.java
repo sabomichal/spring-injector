@@ -15,7 +15,6 @@ import java.io.Serializable;
  * A small implementation may use a static lookup to retrieve the target object.
  * <p>
  * Example:
- * <p>
  * <pre>
  * class UserServiceLocator implements IProxyTargetLocator
  * {
