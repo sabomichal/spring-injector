@@ -27,3 +27,5 @@ public class DependentComponent implements Serializable {
 ```
 
 See the test classes for more detailed use case.
+
+If you like it, give it a star, if you don't, please write an issue.
