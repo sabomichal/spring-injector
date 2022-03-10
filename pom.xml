@@ -8,7 +8,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<springVersion>5.2.9.RELEASE</springVersion>
+		<springVersion>5.3.14</springVersion>
 	</properties>
 
 	<dependencies>
